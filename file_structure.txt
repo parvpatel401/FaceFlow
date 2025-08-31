@@ -1,0 +1,32 @@
+faceflow-ai/
+|
+|-- backend/
+|   |-- db.php                      # Handles MySQL database connection
+|   |-- register.php                # API for new user registration
+|   |-- login.php                   # API for user authentication
+|   |-- enroll.php                  # API to enroll new students and save face images
+|   |-- get_students.php            # API to fetch student data for the dashboard
+|   |-- mark_attendance.php         # API to log attendance records
+|
+|-- public/
+|   |-- index.html                  # Login page
+|   |-- register.html               # Registration page
+|   |-- main.html                   # Main dashboard
+|   |-- assets/
+|   |   |-- js/
+|   |   |   |-- auth.js             # Handles login and registration logic
+|   |   |   |-- main.js             # Handles dashboard, face capture, and enrollment
+|   |   |-- css/
+|   |   |   |-- style.css           # General styling for all pages
+|   |-- uploads/                    # Directory where captured face images will be stored
+|
+|-- face_recognition/
+|   |-- train_model.py              # Your existing script to train the model
+|   |-- recognize_faces.py          # NEW: Script to recognize faces and mark attendance
+|   |-- embedding.pkl               # Generated face embeddings file
+|   |-- requirements.txt            # Python dependencies
+|
+|-- mobile_app/                       # Your existing React Native application
+|   |-- ...
+|
+|-- sql_schema.sql                  # NEW: SQL script to set up the database

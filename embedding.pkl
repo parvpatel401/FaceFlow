@@ -1,0 +1,86 @@
+import os
+import cv2
+import numpy as np
+import pickle
+from tensorflow.keras.models import load_model # Assuming you use a Keras model like FaceNet
+
+# --- CONFIGURATION ---
+DATASET_PATH = "path/to/your/dataset" # IMPORTANT: Set this to your dataset folder
+MODEL_PATH = "path/to/your/facenet_keras.h5" # Path to your pre-trained model
+EMBEDDING_PKL_PATH = "embedding.pkl"
+IMAGE_SIZE = (160, 160) # The input size required by the FaceNet model
+
+# --- 1. LOAD THE PRE-TRAINED FACE RECOGNITION MODEL ---
+try:
+    model = load_model(MODEL_PATH)
+    print("FaceNet model loaded successfully.")
+except Exception as e:
+    print(f"Error loading model: {e}")
+    exit()
+
+def get_embedding(face_pixels):
+    """Calculates a 128-dimensional embedding for a given face."""
+    # Scale pixel values
+    face_pixels = face_pixels.astype('float32')
+    # Standardize pixel values across the channels (global)
+    mean, std = face_pixels.mean(), face_pixels.std()
+    face_pixels = (face_pixels - mean) / std
+    # Transform face into one sample
+    samples = np.expand_dims(face_pixels, axis=0)
+    # Make prediction to get embedding
+    yhat = model.predict(samples)
+    return yhat[0]
+
+# --- 2. PROCESS THE DATASET AND GENERATE EMBEDDINGS ---
+embedding_dict = {}
+
+print(f"Processing dataset at: {DATASET_PATH}")
+
+# Loop through each person (sub-folder) in the dataset
+for student_id in os.listdir(DATASET_PATH):
+    student_path = os.path.join(DATASET_PATH, student_id)
+    
+    if not os.path.isdir(student_path):
+        continue
+
+    student_embeddings = []
+    
+    # Loop through each image for the current student
+    for image_name in os.listdir(student_path):
+        image_path = os.path.join(student_path, image_name)
+        
+        try:
+            # Load image and convert to RGB
+            image = cv2.imread(image_path)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            
+            # Resize image to the model's required input size
+            resized_image = cv2.resize(image, IMAGE_SIZE)
+            
+            # Generate embedding for the face
+            embedding = get_embedding(resized_image)
+            student_embeddings.append(embedding)
+
+        except Exception as e:
+            print(f"  - Warning: Could not process image {image_path}. Error: {e}")
+            continue
+            
+    # If we have embeddings for the student, calculate the average
+    if student_embeddings:
+        average_embedding = np.mean(student_embeddings, axis=0)
+        embedding_dict[student_id] = average_embedding
+        print(f"--> Processed {len(student_embeddings)} images and stored average embedding for student: {student_id}")
+
+# --- 3. SAVE THE FINAL EMBEDDINGS DICTIONARY ---
+if embedding_dict:
+    try:
+        with open(EMBEDDING_PKL_PATH, 'wb') as file:
+            pickle.dump(embedding_dict, file)
+        print("\n--- Training Complete ---")
+        print(f"Embeddings for {len(embedding_dict)} students saved to '{EMBEDDING_PKL_PATH}'.")
+    except Exception as e:
+        print(f"\n--- Error --- \nFailed to save embeddings file. Reason: {e}")
+else:
+    print("\n--- Training Incomplete ---")
+    print("No embeddings were generated. Check your dataset folder structure and content.")
+

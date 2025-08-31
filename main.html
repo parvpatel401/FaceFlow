@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FaceFlow AI - Dashboard</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script defer src="assets/js/main.js"></script>
+  <style>
+    /* Additional dashboard styling for cards and layout */
+    .dashboard-card { background: #f9f8fc; border-radius: 10px; padding: 1.5rem; margin: 1rem 1rem 1rem 0; box-shadow: 0 2px 10px rgba(77,77,77,0.05); min-width: 200px;}
+    .dashboard-row { display: flex; flex-wrap: wrap;}
+    .profile-card { min-width: 200px; }
+    .dashboard-actions { display: flex; justify-content: space-around; margin-bottom: 2rem;}
+    .dashboard-actions button { min-width: 120px;}
+    #video, #canvas { width: 320px; height: 240px;}
+  </style>
+</head>
+<body>
+  <div style="display: flex; width: 100vw;">
+    <nav style="width: 260px; background:#6a11cb; color:white; min-height: 100vh; padding: 2rem 1rem;">
+      <h2>FaceFlow AI</h2>
+      <ul style="list-style:none; padding-left:0;">
+        <li><a href="#" id="dashboardBtn" style="color:white;">Dashboard</a></li>
+        <li><a href="#" id="viewDbBtn" style="color:white;">Students</a></li>
+        <li><a href="#" id="attendanceViewerBtn" style="color:white;">Attendance</a></li>
+        <li><a href="#" id="enrollBtn" style="color:white;">Enroll New</a></li>
+        <li><a href="#" id="profileBtn" style="color:white;">Profile</a></li>
+        <li><a href="#" id="logoutBtn" style="color:white;">Logout</a></li>
+      </ul>
+    </nav>
+    <main id="main-section" class="dashboard-container" style="width:100%;">
+      <h1 id="welcomeMessage"></h1>
+      <div class="dashboard-row">
+        <div class="dashboard-card" id="studentsCard">Total Students: <span id="studentsCount">--</span></div>
+        <div class="dashboard-card" id="attendanceCard">Today Attendance Marked: <span id="attendanceCount">--</span></div>
+        <div class="dashboard-card" id="absenteesCard">Absentees: <span id="absenteesCount">--</span></div>
+        <div class="dashboard-card" id="institutionCard">Institution: <span id="institutionLabel">--</span></div>
+        <div class="dashboard-card profile-card">
+          <img id="avatar" src="assets/img/avatar.png" alt="Avatar" style="width:80px; height:80px; border-radius:40px;">
+          <div>Username: <span id="profUsername"></span></div>
+          <div>Email: <span id="profEmail"></span></div>
+          <div>Joined: <span id="profJoined"></span></div>
+        </div>
+      </div>
+      <div class="dashboard-actions">
+        <button id="enrollBtn" type="button">Enroll Student</button>
+        <button id="viewDbBtn" type="button">View Database</button>
+        <button id="attendanceViewerBtn" type="button">Attendance Viewer</button>
+        <button id="profileBtn" type="button">Profile & Settings</button>
+      </div>
+
+      <section id="dashboard-section" style="display: block;">
+        <h2>Dashboard Overview</h2>
+        <div><strong>Recent Absentees:</strong> <span id="recentAbsentees">--</span></div>
+        <div><strong>Attendance for Today:</strong> <span id="attendanceToday">--</span></div>
+        <div><strong>Last Attendance Actions:</strong>
+          <ul id="attendanceActions"></ul>
+        </div>
+      </section>
+
+      <section id="enrollment-section" style="display:none;">
+        <h2>Enroll New Student</h2>
+        <form id="enrollmentForm">
+          <input type="text" name="student_id" placeholder="Student ID" required>
+          <input type="text" name="roll_no" placeholder="Roll No" required>
+          <input type="text" name="class" placeholder="Class" required>
+          <input type="text" name="section" placeholder="Section" required>
+          <input type="text" name="institution" placeholder="Institution" required>
+          <button type="button" id="captureBtn">Capture Face Image</button>
+          <video id="video" autoplay playsinline></video>
+          <canvas id="canvas" width="160" height="160" style="display:none;"></canvas>
+          <button type="submit">Enroll</button>
+        </form>
+        <div id="enrollMessage" class="message" style="display:none;"></div>
+      </section>
+
+      <section id="database-view" style="display:none;">
+        <h2>Students Database</h2>
+        <table id="students-table">
+          <thead>
+            <tr>
+              <th>Student ID</th>
+              <th>Name</th>
+              <th>Roll No</th>
+              <th>Class</th>
+              <th>Section</th>
+              <th>Institution</th>
+              <th>Enroll Date</th>
+              <th>Face Image</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section id="attendance-view" style="display:none;">
+        <h2>Attendance Records</h2>
+        <table id="attendance-table">
+          <thead>
+            <tr>
+              <th>Student ID</th>
+              <th>Name</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Status</th>
+              <th>Marked By</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section id="profile-view" style="display:none;">
+        <h2>Profile & Settings</h2>
+        <div>Email: <span id="profileEmail"></span></div>
+        <div>Username: <span id="profileUsername"></span></div>
+        <div>Joined: <span id="profileJoined"></span></div>
+        <button id="logoutBtnProfile" type="button">Logout</button>
+      </section>
+    </main>
+  </div>
+  <script>
+    // FULL INTEGRATION: Includes all logic from 'main.js'
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user) { window.location.href = 'index.html'; return; }
+      document.getElementById('welcomeMessage').textContent = `Welcome, ${user.username}!`;
+      document.getElementById('profUsername').textContent = user.username;
+      document.getElementById('profEmail').textContent = user.email;
+      document.getElementById('profileUsername').textContent = user.username;
+      document.getElementById('profileEmail').textContent = user.email;
+      // Additional profile settings
+      document.getElementById('logoutBtn').onclick = document.getElementById('logoutBtnProfile').onclick = () => {
+        localStorage.removeItem('user'); window.location.href = 'index.html';
+      };
+
+      // View togglers
+      const dashboardSection = document.getElementById('dashboard-section');
+      const enrollmentSection = document.getElementById('enrollment-section');
+      const databaseView = document.getElementById('database-view');
+      const attendanceView = document.getElementById('attendance-view');
+      const profileView = document.getElementById('profile-view');
+      const sectionAll = [dashboardSection, enrollmentSection, databaseView, attendanceView, profileView];
+
+      const showSection = sec => sectionAll.forEach(s => s.style.display = (s === sec ? 'block' : 'none'));
+
+      document.getElementById('dashboardBtn').onclick = () => { showSection(dashboardSection); };
+      document.getElementById('viewDbBtn').onclick = () => { showSection(databaseView); fetchStudentData(); };
+      document.getElementById('enrollBtn').onclick = () => { showSection(enrollmentSection); startCamera(); };
+      document.getElementById('attendanceViewerBtn').onclick = () => { showSection(attendanceView); fetchAttendanceRecords(); };
+      document.getElementById('profileBtn').onclick = () => { showSection(profileView); };
+
+      // Dashboard statistics
+      async function fetchDashboardStats() {
+        const studentsRes = await fetch('../backend/get_students.php');
+        const students = await studentsRes.json();
+        document.getElementById('studentsCount').textContent = students.length || '0';
+        document.getElementById('recentAbsentees').textContent = 'Loading...';
+        fetchAttendanceRecords();
+        // Additional: fetch absentees
+        // Assume similar PHP API available for absentees and attendance summary (to be created if not)
+        // Update Cards
+      }
+      fetchDashboardStats();
+
+      // Camera capture logic for enrollment
+      let capturedImageBlob = null;
+      async function startCamera() {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          document.getElementById('video').srcObject = stream;
+        } catch (err) {
+          alert("Camera access is required for face enrollment.");
+        }
+      }
+      document.getElementById('captureBtn').onclick = () => {
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(blob => {
+          capturedImageBlob = blob;
+          alert('Face captured successfully!');
+        }, 'image/png');
+      };
+
+      // Enrollment submission logic
+      document.getElementById('enrollmentForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!capturedImageBlob) {
+          alert('Please capture a face image before submitting.');
+          return;
+        }
+        const formData = new FormData(document.getElementById('enrollmentForm'));
+        formData.append('face_image', capturedImageBlob, 'face.png');
+        const res = await fetch('../backend/enroll.php', { method: 'POST', body: formData });
+        const result = await res.json();
+        const enrollMessage = document.getElementById('enrollMessage');
+        enrollMessage.textContent = result.message;
+        enrollMessage.className = result.success ? 'message success' : 'message error';
+        enrollMessage.style.display = 'block';
+        if(result.success) {
+          document.getElementById('enrollmentForm').reset();
+          setTimeout(() => enrollmentSection.style.display = 'none', 2000);
+        }
+        fetchStudentData();
+        fetchDashboardStats();
+      });
+
+      // Student database
+      async function fetchStudentData() {
+        const res = await fetch('../backend/get_students.php');
+        const students = await res.json();
+        const tbody = document.querySelector('#students-table tbody');
+        tbody.innerHTML = '';
+        if (students.length > 0) {
+          students.forEach(student => {
+            const row = `<tr>
+              <td>${student.student_id}</td>
+              <td>${student.student_id}</td>
+              <td>${student.roll_no}</td>
+              <td>${student.class}</td>
+              <td>${student.section}</td>
+              <td>${student.institution}</td>
+              <td>${student.enrollment_date}</td>
+              <td><img src="uploads/${student.student_id}/face.png" style="width:40px; height:40px; border-radius:20px;"></td>
+              <td>
+                <button onclick="editStudent('${student.student_id}')">Edit</button>
+                <button onclick="deleteStudent('${student.student_id}')">Delete</button>
+              </td>
+            </tr>`;
+            tbody.innerHTML += row;
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="9">No students found.</td></tr>';
+        }
+      }
+      window.editStudent = function(student_id) { alert("Edit student logic for: " + student_id); }
+      window.deleteStudent = async function(student_id) {
+        // Delete logic (PHP endpoint to be created if not exists)
+        if(confirm("Delete student?")) {
+          // Example: await fetch('../backend/delete_student.php', { method: 'POST', body: JSON.stringify({ student_id }) });
+          fetchStudentData();
+          fetchDashboardStats();
+        }
+      }
+
+      // Attendance records (fetch from backend; placeholder here)
+      async function fetchAttendanceRecords() {
+        // Example fetch logic; you need to have backend endpoint
+        // const res = await fetch('../backend/get_attendance.php');
+        // const attendance = await res.json();
+        const attendance = []; // Populate from backend
+        const tbody = document.querySelector('#attendance-table tbody');
+        tbody.innerHTML = '';
+        if(attendance.length > 0) {
+          attendance.forEach(a => {
+            tbody.innerHTML += `<tr>
+              <td>${a.student_id}</td>
+              <td>${a.name}</td>
+              <td>${a.date}</td>
+              <td>${a.time}</td>
+              <td>${a.status}</td>
+              <td>${a.marked_by}</td>
+            </tr>`;
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="6">No attendance records yet.</td></tr>';
+        }
+      }
+
+      // Python backend integration trigger (face recognition, training) – example:
+      async function runFaceRecognition() {
+        // Trigger Python recognize_faces.py via backend
+        // await fetch('../backend/run_face_recognition.php', { method: 'POST' });
+        // Update dashboard stats and attendance
+        fetchAttendanceRecords();
+        fetchDashboardStats();
+      }
+      // You can trigger runFaceRecognition() on-demand or scheduled (cron on backend)
+    });
+  </script>
+</body>
+</html>
