@@ -1,6 +1,8 @@
 const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
 
+
+
 if (loginForm) {
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -16,11 +18,17 @@ if (loginForm) {
     // Show registration success/failure
 
     const result = await res.json();
-    if (result.success) {
-      localStorage.setItem('user', JSON.stringify(result.user));
-      window.location.href = 'main.html';
-    } else {
-      showMessage(result.message, false);
+      if (data.success) {
+        // Save user details for main.html
+        localStorage.setItem("user", JSON.stringify({
+        username: data.username,
+        email: data.email,
+        joined: data.joined
+        }));
+
+        window.location.href = "http://localhost:8080/faceflow_ai1/main.html";
+      } else {
+        alert(data.message || "Login failed");
     }
   });
 }
@@ -40,7 +48,7 @@ if (loginForm) {
     const result1 = await res1.json();
     showMessage(result1.message, result1.success);
     if (result1.success) {
-        setTimeout(() => window.location.href = 'index.html', 2000);
+        setTimeout(() => window.location.href = 'http://localhost:8080/faceflow_ai1/index.html', 2000);
     }
     });
     // In main.html via main.js
