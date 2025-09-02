@@ -9,7 +9,7 @@ app.use(express.static('public'));
 
 
 // Start server
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 // Tell the app to listen for connections
 app.listen(PORT, () => {
